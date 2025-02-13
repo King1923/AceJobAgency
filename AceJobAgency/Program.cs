@@ -1,8 +1,18 @@
-using AceJobAgency.Model;
+﻿using AceJobAgency.Model;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
+using System.Net.Mail;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ✅ Ensure appsettings.Development.json is loaded
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
 
 // Configure Database Context using AuthDbContext
 builder.Services.AddDbContext<AuthDbContext>(options =>
@@ -56,6 +66,9 @@ builder.Services.AddAuthorization(options =>
         policy => policy.RequireClaim("Department", "HR"));
 });
 
+// ✅ Add Email Service
+builder.Services.AddSingleton<IEmailSender, EmailSender>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -70,9 +83,9 @@ app.UseStaticFiles();
 app.UseRouting();
 
 // Enable session before authentication & authorization
-app.UseSession(); // <---- Add this before authentication
+app.UseSession();
 
-app.UseAuthentication();  // Ensure authentication middleware is added
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
@@ -88,4 +101,4 @@ app.MapGet("/api/session-check", async (HttpContext context) =>
     }
 });
 
-app.Run(); // Must be last
+app.Run();

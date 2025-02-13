@@ -52,7 +52,7 @@ namespace AceJobAgency.Pages
             }
 
             // Validate new password strength
-            if (!IsPasswordStrong(CModel.NewPassword))
+            if (!IsPasswordStrong(CModel.NewPassword, CModel.CurrentPassword))
             {
                 return Page();
             }
@@ -71,18 +71,26 @@ namespace AceJobAgency.Pages
             return RedirectToPage("/Login");
         }
 
-        private bool IsPasswordStrong(string password)
+
+        private bool IsPasswordStrong(string password, string currentPassword)
         {
             List<string> errors = new List<string>();
 
+            if (password == currentPassword)
+                errors.Add("New password must not match the current password.");
+
             if (password.Length < 12)
                 errors.Add("Password must be at least 12 characters long.");
+
             if (!Regex.IsMatch(password, @"[A-Z]"))
                 errors.Add("Password must include at least one uppercase letter.");
+
             if (!Regex.IsMatch(password, @"[a-z]"))
                 errors.Add("Password must include at least one lowercase letter.");
+
             if (!Regex.IsMatch(password, @"\d"))
                 errors.Add("Password must include at least one number.");
+
             if (!Regex.IsMatch(password, @"[\W_]"))
                 errors.Add("Password must include at least one special character.");
 
