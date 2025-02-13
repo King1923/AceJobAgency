@@ -1,0 +1,57 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+<script>
+    let sessionTimeout = 60000; // 1 min = 60000ms
+    let timeout; // Declare timeout variable
+
+    function checkSession() {
+        fetch('/api/session-check', { method: 'GET' })
+            .then(response => {
+                if (response.status === 401) { // Session expired
+                    showSessionExpiredAlert();
+                }
+            });
+    }
+
+    function showSessionExpiredAlert() {
+        alert("Your session has expired. You will be redirected to the login page.");
+        window.location.href = "/Login"; // Redirect after alert is closed
+    }
+
+    // Periodically check if session is still valid
+    let sessionCheckInterval = setInterval(checkSession, 5000); // Check every 5 sec
+
+    // Initialize session timeout when the page loads
+    timeout = setTimeout(showSessionExpiredAlert, sessionTimeout);
+
+    // Reset timer on user interaction
+    function resetTimer() {
+        clearTimeout(timeout);
+        timeout = setTimeout(showSessionExpiredAlert, sessionTimeout);
+    }
+
+    document.addEventListener("mousemove", resetTimer);
+    document.addEventListener("keydown", resetTimer);
+</script>
+
+<div class="text-center">
+    <h1 class="display-4">Welcome, @Model.FirstName @Model.LastName</h1>
+
+    <p><strong>Email:</strong> @Model.Email</p>
+    <p><strong>NRIC:</strong> @Model.DecryptedNRIC</p>
+    <p><strong>Gender:</strong> @Model.Gender</p>
+    <p><strong>Date of Birth:</strong> @Model.DateOfBirth</p>
+    <p><strong>Who Am I:</strong> @Model.WhoAmI</p>
+
+    @if (!string.IsNullOrEmpty(Model.ResumeFilePath))
+    {
+        <p><strong>Resume:</strong> <a href="@Model.ResumeFilePath" download>Download Resume</a></p>
+    }
+    else
+    {
+        <p><strong>Resume:</strong> No resume uploaded.</p>
+    }
+</div>

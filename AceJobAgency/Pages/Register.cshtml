@@ -1,0 +1,212 @@
+﻿@page
+@model AceJobAgency.Pages.RegisterModel
+@{
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center align-items-center">
+        <div class="col-sm-12 col-md-12 col-lg-6">
+            <h1 class="mb-3">Register</h1>
+
+            <form method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="All" class="text-danger"></div>
+
+                <div class="mb-3">
+                    <label asp-for="RModel.FirstName" class="form-label">First Name</label>
+                    <input asp-for="RModel.FirstName" class="form-control" id="firstName" required />
+                    <span id="firstNameError" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="RModel.LastName" class="form-label">Last Name</label>
+                    <input asp-for="RModel.LastName" class="form-control" id="lastName" required />
+                    <span id="lastNameError" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="RModel.Gender" class="form-label">Gender</label>
+                    <select asp-for="RModel.Gender" class="form-control" required>
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <span asp-validation-for="RModel.Gender" class="text-danger"></span>
+                </div>
+
+
+                <div class="mb-3">
+                    <label asp-for="RModel.NRIC" class="form-label">NRIC</label>
+                    <input asp-for="RModel.NRIC" type="text" class="form-control" id="nric" required maxlength="9" />
+                    <span id="nricError" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="RModel.Email" class="form-label">Email Address</label>
+                    <input asp-for="RModel.Email" type="email" class="form-control" required />
+                    <span asp-validation-for="RModel.Email" class="text-danger"></span>
+                </div>
+
+                <!-- Password Field with Strength Indicator -->
+                <div class="mb-3">
+                    <label asp-for="RModel.Password" class="form-label">Password</label>
+                    <div class="input-group">
+                        <input asp-for="RModel.Password" type="password" class="form-control" id="passwordField" required />
+                        <button type="button" class="btn btn-outline-secondary" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <small class="form-text text-muted">
+                        Must be at least 12 characters long, including an uppercase letter, a number, and a special character.
+                    </small>
+                    <div id="passwordErrors" class="text-danger"></div>
+                    <div class="password-strength">
+                        <div id="strengthBar"></div>
+                    </div>
+                    <span asp-validation-for="RModel.Password" class="text-danger"></span>
+                </div>
+
+                <!-- Confirm Password Field with Toggle -->
+                <div class="mb-3">
+                    <label asp-for="RModel.ConfirmPassword" class="form-label">Confirm Password</label>
+                    <div class="input-group">
+                        <input asp-for="RModel.ConfirmPassword" type="password" class="form-control" id="confirmPasswordField" required />
+                        <button type="button" class="btn btn-outline-secondary" id="toggleConfirmPassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="RModel.ConfirmPassword" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="RModel.DateOfBirth" class="form-label">Date of Birth</label>
+                    <input asp-for="RModel.DateOfBirth" type="date" class="form-control" required
+                           min="1900-01-01" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    <span asp-validation-for="RModel.DateOfBirth" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="RModel.Resume" class="form-label">Upload Resume (.docx or .pdf, max 2MB)</label>
+                    <input asp-for="RModel.Resume" type="file" accept=".pdf,.docx" class="form-control" id="resumeUpload" required />
+                    <span asp-validation-for="RModel.Resume" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="RModel.WhoAmI" class="form-label">Who Am I</label>
+                    <textarea asp-for="RModel.WhoAmI" class="form-control" rows="4"></textarea>
+                    <span asp-validation-for="RModel.WhoAmI" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .password-strength {
+        height: 5px;
+        width: 100%;
+        background-color: #ddd;
+        margin-top: 5px;
+        position: relative;
+    }
+
+    #strengthBar {
+        height: 5px;
+        width: 0%;
+        background-color: red;
+        transition: width 0.3s ease-in-out;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        function validateName(input, errorId) {
+            const value = input.value;
+            const regex = /^[A-Za-z\s]{2,}$/;
+            const errorSpan = document.getElementById(errorId);
+
+            if (!regex.test(value)) {
+                errorSpan.textContent = "Only letters and spaces allowed, and must be at least 2 characters.";
+            } else {
+                errorSpan.textContent = "";
+            }
+        }
+
+        function validateNRIC(input) {
+            const value = input.value;
+            const regex = /^[A-Za-z0-9]{9}$/;
+            const errorSpan = document.getElementById("nricError");
+
+            if (!regex.test(value)) {
+                errorSpan.textContent = "NRIC must be exactly 9 characters and contain only letters and numbers.";
+            } else {
+                errorSpan.textContent = "";
+            }
+        }
+
+        document.getElementById("firstName").addEventListener("input", function () {
+            validateName(this, "firstNameError");
+        });
+
+        document.getElementById("lastName").addEventListener("input", function () {
+            validateName(this, "lastNameError");
+        });
+
+        document.getElementById("nric").addEventListener("input", function () {
+            validateNRIC(this);
+        });
+
+        // Password Validation
+        const passwordField = document.getElementById("passwordField");
+        const confirmPasswordField = document.getElementById("confirmPasswordField");
+        const passwordErrors = document.getElementById("passwordErrors");
+        const strengthBar = document.getElementById("strengthBar");
+
+        passwordField.addEventListener("input", function () {
+            const password = passwordField.value;
+            let strength = 0;
+            let errors = [];
+
+            if (password.length >= 12) strength++;
+            else errors.push("Must be at least 12 characters long");
+
+            if (/[A-Z]/.test(password)) strength++;
+            else errors.push("Must include an uppercase letter");
+
+            if (/[a-z]/.test(password)) strength++;
+            else errors.push("Must include a lowercase letter");
+
+            if (/\d/.test(password)) strength++;
+            else errors.push("Must include a number");
+
+            if (/[\W_]/.test(password)) strength++;
+            else errors.push("Must include a special character");
+
+            passwordErrors.innerHTML = errors.length > 0 ? errors.join("<br>") : "";
+
+            const strengthPercentage = (strength / 5) * 100;
+            strengthBar.style.width = strengthPercentage + "%";
+
+            if (strength === 1) strengthBar.style.backgroundColor = "red";
+            else if (strength === 2 || strength === 3) strengthBar.style.backgroundColor = "orange";
+            else if (strength === 4) strengthBar.style.backgroundColor = "yellow";
+            else if (strength === 5) strengthBar.style.backgroundColor = "green";
+        });
+
+        // Toggle Password Visibility
+        document.getElementById("togglePassword").addEventListener("click", function () {
+            passwordField.type = passwordField.type === "password" ? "text" : "password";
+            this.classList.toggle("fa-eye-slash");
+        });
+
+        document.getElementById("toggleConfirmPassword").addEventListener("click", function () {
+            confirmPasswordField.type = confirmPasswordField.type === "password" ? "text" : "password";
+            this.classList.toggle("fa-eye-slash");
+        });
+    });
+</script>
