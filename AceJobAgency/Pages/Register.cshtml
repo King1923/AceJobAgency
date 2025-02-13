@@ -3,6 +3,11 @@
 @{
 }
 
+<head>
+    <!-- Add reCAPTCHA script -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6LdUSdYqAAAAAKUBcLHvJVwicRrLyC9HIQwpPofi"></script>
+</head>
+
 <div class="container mt-5">
     <div class="row justify-content-center align-items-center">
         <div class="col-sm-12 col-md-12 col-lg-6">
@@ -34,7 +39,6 @@
                     </select>
                     <span asp-validation-for="RModel.Gender" class="text-danger"></span>
                 </div>
-
 
                 <div class="mb-3">
                     <label asp-for="RModel.NRIC" class="form-label">NRIC</label>
@@ -97,7 +101,7 @@
                     <textarea asp-for="RModel.WhoAmI" class="form-control" rows="4"></textarea>
                     <span asp-validation-for="RModel.WhoAmI" class="text-danger"></span>
                 </div>
-
+                <input type="hidden" name="RecaptchaToken" id="RecaptchaToken" />
                 <div class="mb-3">
                     <button type="submit" class="btn btn-primary">Register</button>
                 </div>
@@ -207,6 +211,31 @@
         document.getElementById("toggleConfirmPassword").addEventListener("click", function () {
             confirmPasswordField.type = confirmPasswordField.type === "password" ? "text" : "password";
             this.classList.toggle("fa-eye-slash");
+        });
+
+        // reCAPTCHA setup
+        grecaptcha.ready(function () {
+            grecaptcha.execute('6LdUSdYqAAAAAKUBcLHvJVwicRrLyC9HIQwpPofi', { action: 'register' }).then(function (token) {
+                document.getElementById("RecaptchaToken").value = token;
+            });
+        });
+
+        // Trigger reCAPTCHA before form submission
+        const form = document.querySelector("form");
+        form.addEventListener("submit", function (event) {
+            var recaptchaToken = document.getElementById("RecaptchaToken").value;
+            if (!recaptchaToken) {
+                event.preventDefault();
+                alert("reCAPTCHA verification failed. Please refresh and try again.");
+                return;
+            }
+
+            // Append token to form
+            const recaptchaTokenInput = document.createElement('input');
+            recaptchaTokenInput.type = 'hidden';
+            recaptchaTokenInput.name = 'RecaptchaToken';
+            recaptchaTokenInput.value = recaptchaToken;
+            form.appendChild(recaptchaTokenInput);
         });
     });
 </script>

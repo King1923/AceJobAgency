@@ -55,3 +55,27 @@
         <p><strong>Resume:</strong> No resume uploaded.</p>
     }
 </div>
+<div>
+    @functions {
+        public int divide(int x, int y)
+        {
+            string errormessage;
+            try
+            {
+                return x / y;
+            }
+            catch (DivideByZeroException d)
+            {
+                errormessage = d.ToString();
+                WriteLiteral("<br />Cannot Divide by Zero Exception found <br /><br />");
+                WriteLiteral("Additional Info <br /><br />" + errormessage);
+                return 0;
+            }
+        }
+    }
+    <h3>Division of 10 / 5 is @divide(10, 5)</h3>
+    <h3>Division of 10 / 0 is @divide(12, 0)</h3>
+
+    <h3>Division of 10 / 5 is @divide(10, 5)</h3>
+    <h3>Division of 10 / 0 is @divide(12, 0)</h3>
+</div>

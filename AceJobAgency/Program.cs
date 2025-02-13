@@ -47,6 +47,8 @@ builder.Services.ConfigureApplicationCookie(options =>
     };
 });
 
+builder.Services.AddHttpClient<ReCaptchaService>();
+
 // Configure Authorization Policy
 builder.Services.AddAuthorization(options =>
 {

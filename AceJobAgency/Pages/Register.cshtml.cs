@@ -8,6 +8,8 @@ using System.IO;
 using Microsoft.AspNetCore.Http;
 using System.Text.RegularExpressions;
 using System.Text.Encodings.Web; // Import for XSS prevention
+using System.Net.Http;
+using Newtonsoft.Json.Linq; // Add the necessary JSON parsing library
 
 namespace AceJobAgency.Pages
 {
@@ -19,6 +21,9 @@ namespace AceJobAgency.Pages
 
         [BindProperty]
         public Register RModel { get; set; }
+
+        [BindProperty]
+        public string RecaptchaToken { get; set; }  // reCAPTCHA Token
 
         public RegisterModel(UserManager<ApplicationUser> userManager,
                              SignInManager<ApplicationUser> signInManager,
@@ -35,6 +40,26 @@ namespace AceJobAgency.Pages
         {
             if (!ModelState.IsValid)
             {
+                return Page();
+            }
+
+            // Debugging: Log the reCAPTCHA token received
+            Console.WriteLine($"[DEBUG] Received reCAPTCHA Token: {RecaptchaToken}");
+
+            // Verify reCAPTCHA
+            var (isRecaptchaValid, recaptchaScore) = await VerifyRecaptchaAsync(RecaptchaToken);
+            Console.WriteLine($"[DEBUG] reCAPTCHA Valid: {isRecaptchaValid}, Score: {recaptchaScore}");
+
+            if (!isRecaptchaValid)
+            {
+                ModelState.AddModelError(string.Empty, "reCAPTCHA validation failed. Please try again.");
+                return Page();
+            }
+
+            // 🔹 Check for suspicious activity based on score
+            if (recaptchaScore < 0.5)
+            {
+                ModelState.AddModelError(string.Empty, "Your activity looks suspicious. Please try again later.");
                 return Page();
             }
 
@@ -148,6 +173,29 @@ namespace AceJobAgency.Pages
             }
 
             return true;
+        }
+
+        private async Task<(bool success, double score)> VerifyRecaptchaAsync(string recaptchaToken)
+        {
+            try
+            {
+                var client = new HttpClient();
+                var response = await client.PostAsync(
+                    $"https://www.google.com/recaptcha/api/siteverify?secret=6LdUSdYqAAAAABW4zay5Z9cfPPVO1MKIDBRYb8m6&response={recaptchaToken}",
+                    null);
+
+                var result = await response.Content.ReadAsStringAsync();
+                JObject jsonResult = JObject.Parse(result);
+                bool success = jsonResult["success"]?.Value<bool>() ?? false;
+                double score = jsonResult["score"]?.Value<double>() ?? 0.0;
+
+                return (success, score);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] reCAPTCHA verification error: {ex.Message}");
+                return (false, 0.0);
+            }
         }
     }
 }

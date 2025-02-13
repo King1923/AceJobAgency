@@ -3,6 +3,8 @@
 @{
 }
 
+<script src="https://www.google.com/recaptcha/api.js?render=6LdUSdYqAAAAAKUBcLHvJVwicRrLyC9HIQwpPofi"></script>
+
 <div class="container mt-5">
     <div class="row justify-content-center align-items-center">
         <div class="col-sm-12 col-md-12 col-lg-4">
@@ -20,6 +22,9 @@
 
             <form method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="RecaptchaToken" id="RecaptchaToken" />
+
                 <div class="mb-3">
                     <label class="form-label" asp-for="LModel.Email">Email Address</label>
                     <input type="text" asp-for="LModel.Email" class="form-control" />
@@ -36,11 +41,27 @@
                     <input type="checkbox" asp-for="LModel.RememberMe" class="form-check-input" />
                     <label class="form-check-label" asp-for="LModel.RememberMe">Remember Me?</label>
                 </div>
+                <div class="mb-3">
+                    <a href="/ChangePassword" class="btn btn-link">Change Password</a>
+                </div>
 
                 <div class="mb-3">
-                    <button type="submit" class="btn btn-primary">Login</button>
+                    <button type="submit" class="btn btn-primary" id="loginButton">Login</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+    document.getElementById("loginButton").addEventListener("click", function (event) {
+        event.preventDefault(); // Prevent default form submission
+        grecaptcha.ready(function () {
+            grecaptcha.execute('6LdUSdYqAAAAAKUBcLHvJVwicRrLyC9HIQwpPofi', { action: 'login' }).then(function (token) {
+                console.log("ReCaptcha Token:", token); // Log the token
+                document.getElementById("RecaptchaToken").value = token;
+                document.forms[0].submit(); // Submit the form after setting the token
+            });
+        });
+    });
+</script>
