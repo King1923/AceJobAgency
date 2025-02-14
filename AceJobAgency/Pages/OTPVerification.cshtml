@@ -2,3 +2,62 @@
 @model AceJobAgency.Pages.OTPVerificationModel
 @{
 }
+
+<div class="container mt-5">
+    <div class="row justify-content-center align-items-center">
+        <div class="col-sm-12 col-md-12 col-lg-4">
+            <h1 class="mb-3">Enter OTP</h1>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <p>@error.ErrorMessage</p>
+                    }
+                </div>
+            }
+
+            <form method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label class="form-label">Enter OTP</label>
+                    <input type="text" asp-for="OTPInput" class="form-control" maxlength="6" />
+                    <span asp-validation-for="OTPInput" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary">Verify OTP</button>
+                </div>
+            </form>
+
+            <div id="resendOtpSection">
+                <p id="countdown"></p>
+                <button id="resendButton" class="btn btn-secondary" disabled>Resend OTP</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let countdown = 60;
+    function updateTimer() {
+        let minutes = Math.floor(countdown / 60);
+        let seconds = countdown % 60;
+        document.getElementById("countdown").innerText = `Resend OTP in ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        countdown--;
+        if (countdown < 0) {
+            document.getElementById("resendButton").removeAttribute("disabled");
+            document.getElementById("countdown").innerText = "";
+        } else {
+            setTimeout(updateTimer, 1000);
+        }
+    }
+
+    document.getElementById("resendButton").addEventListener("click", function() {
+        window.location.href = "/OTPVerification?handler=ResendOTP";
+    });
+
+    updateTimer();
+</script>

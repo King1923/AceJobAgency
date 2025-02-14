@@ -9,6 +9,8 @@ using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using System.Net.Http;
 using Newtonsoft.Json.Linq;
+using System.Security.Cryptography;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace AceJobAgency.Pages
 {
@@ -23,16 +25,18 @@ namespace AceJobAgency.Pages
         private readonly SignInManager<ApplicationUser> signInManager;
         private readonly UserManager<ApplicationUser> userManager;
         private readonly HttpClient _httpClient; // HttpClient for reCAPTCHA verification
+        private readonly IEmailSender emailSender; // Email service for OTP
 
         private const int MaxFailedAttempts = 3;
         private const double SuspiciousThreshold = 0.5; // Threshold for suspicious activity
         private const string RecaptchaSecretKey = "6LdUSdYqAAAAABW4zay5Z9cfPPVO1MKIDBRYb8m6"; // Replace with your actual secret key
 
-        public LoginModel(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, HttpClient httpClient)
+        public LoginModel(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, HttpClient httpClient, IEmailSender emailSender)
         {
             this.signInManager = signInManager;
             this.userManager = userManager;
             this._httpClient = httpClient;
+            this.emailSender = emailSender;
         }
 
         public void OnGet() { }
@@ -104,17 +108,17 @@ namespace AceJobAgency.Pages
             await userManager.ResetAccessFailedCountAsync(user);
             HttpContext.Session.Remove("FailedLoginAttempts");
 
-            // ✅ Use Email instead of UserName in PasswordSignInAsync()
-            var identityResult = await signInManager.PasswordSignInAsync(user.NormalizedUserName, LModel.Password, LModel.RememberMe, lockoutOnFailure: true);
-            Console.WriteLine($"[DEBUG] IdentityResult Succeeded: {identityResult.Succeeded}");
+            // ✅ Generate OTP
+            string otp = GenerateOTP();
+            HttpContext.Session.SetString("OTP", otp);
+            HttpContext.Session.SetString("OTPExpiry", DateTime.UtcNow.AddMinutes(3).ToString());
+            HttpContext.Session.SetString("UserEmail", LModel.Email);
 
-            if (identityResult.Succeeded)
-            {
-                return RedirectToPage("/Index");
-            }
+            // ✅ Send OTP via Email
+            await emailSender.SendEmailAsync(LModel.Email, "Your OTP Code", $"Your OTP is: <b>{otp}</b>. It expires in 3 minutes.");
 
-            ModelState.AddModelError(string.Empty, "Invalid username or password.");
-            return Page();
+            // ✅ Redirect to OTP Verification Page
+            return RedirectToPage("/OTPVerification");
         }
 
         private async Task<(bool success, double score)> VerifyRecaptchaAsync(string recaptchaToken)
@@ -138,6 +142,17 @@ namespace AceJobAgency.Pages
             {
                 Console.WriteLine($"[ERROR] reCAPTCHA verification error: {ex.Message}");
                 return (false, 0.0);
+            }
+        }
+
+        private string GenerateOTP()
+        {
+            using (var rng = new RNGCryptoServiceProvider())
+            {
+                byte[] tokenData = new byte[4];
+                rng.GetBytes(tokenData);
+                int otp = BitConverter.ToUInt16(tokenData, 0) % 1000000;
+                return otp.ToString("D6"); // 6-digit OTP
             }
         }
     }
