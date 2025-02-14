@@ -20,5 +20,8 @@ namespace AceJobAgency.Model
             string connectionString = _configuration.GetConnectionString("AuthConnectionString");
             optionsBuilder.UseSqlServer(connectionString);
         }
+
+        // ✅ Add this property to enable logging in AuditLogService
+        public DbSet<AuditLog> AuditLogs { get; set; }
     }
 }

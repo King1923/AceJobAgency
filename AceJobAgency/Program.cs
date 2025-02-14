@@ -1,4 +1,5 @@
 ﻿using AceJobAgency.Model;
+using AceJobAgency.Services; // ✅ Added namespace for AuditLogService
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -68,6 +69,10 @@ builder.Services.AddAuthorization(options =>
 
 // ✅ Add Email Service
 builder.Services.AddSingleton<IEmailSender, EmailSender>();
+
+// ✅ Register Audit Logging Service
+builder.Services.AddScoped<AuditLogService>();
+builder.Services.AddHttpContextAccessor(); // Required for capturing user IP addresses
 
 var app = builder.Build();
 

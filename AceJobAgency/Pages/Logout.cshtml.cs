@@ -2,28 +2,38 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using AceJobAgency.Model;
-using Microsoft.AspNetCore.Http; // Required for session management
+using AceJobAgency.Services; // ✅ Added namespace for AuditLogService
+using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
 
 namespace AceJobAgency.Pages
 {
     public class LogoutModel : PageModel
     {
         private readonly SignInManager<ApplicationUser> signInManager;
+        private readonly AuditLogService _auditLogService; // ✅ Added AuditLogService
 
-        public LogoutModel(SignInManager<ApplicationUser> signInManager)
+        public LogoutModel(SignInManager<ApplicationUser> signInManager, AuditLogService auditLogService) // ✅ Injected AuditLogService
         {
             this.signInManager = signInManager;
+            this._auditLogService = auditLogService;
         }
 
-        public void OnGet()
-        {
-        }
+        public void OnGet() { }
 
         public async Task<IActionResult> OnPostLogoutAsync()
         {
-            HttpContext.Session.Clear(); // ✅ Clear all session data
-            await signInManager.SignOutAsync(); // ✅ Proper logout
-            return RedirectToPage("Login");
+            var userEmail = User.Identity?.Name;
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+            await signInManager.SignOutAsync(); // ✅ Use 'signInManager' instead of '_signInManager'
+
+            if (!string.IsNullOrEmpty(userEmail))
+            {
+                await _auditLogService.LogAsync(userEmail, "Logout Successful", ipAddress);
+            }
+
+            return RedirectToPage("/Login");
         }
 
         public IActionResult OnPostDontLogoutAsync()

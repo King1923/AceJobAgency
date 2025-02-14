@@ -1,5 +1,6 @@
 ﻿using AceJobAgency.ViewModels;
 using AceJobAgency.Model;
+using AceJobAgency.Services; // ✅ Added namespace for AuditLogService
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -26,17 +27,23 @@ namespace AceJobAgency.Pages
         private readonly UserManager<ApplicationUser> userManager;
         private readonly HttpClient _httpClient; // HttpClient for reCAPTCHA verification
         private readonly IEmailSender emailSender; // Email service for OTP
+        private readonly AuditLogService _auditLogService; // ✅ Added AuditLogService
 
         private const int MaxFailedAttempts = 3;
         private const double SuspiciousThreshold = 0.5; // Threshold for suspicious activity
         private const string RecaptchaSecretKey = "6LdUSdYqAAAAABW4zay5Z9cfPPVO1MKIDBRYb8m6"; // Replace with your actual secret key
 
-        public LoginModel(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, HttpClient httpClient, IEmailSender emailSender)
+        public LoginModel(SignInManager<ApplicationUser> signInManager,
+                          UserManager<ApplicationUser> userManager,
+                          HttpClient httpClient,
+                          IEmailSender emailSender,
+                          AuditLogService auditLogService) // ✅ Injected AuditLogService
         {
             this.signInManager = signInManager;
             this.userManager = userManager;
             this._httpClient = httpClient;
             this.emailSender = emailSender;
+            this._auditLogService = auditLogService; // ✅ Assign AuditLogService
         }
 
         public void OnGet() { }
@@ -48,7 +55,6 @@ namespace AceJobAgency.Pages
                 return Page();
             }
 
-            // Debugging: Log the reCAPTCHA token received
             Console.WriteLine($"[DEBUG] Received reCAPTCHA Token: {RecaptchaToken}");
 
             // Verify reCAPTCHA
@@ -61,7 +67,6 @@ namespace AceJobAgency.Pages
                 return Page();
             }
 
-            // 🔹 Check for suspicious activity based on score
             if (recaptchaScore < SuspiciousThreshold)
             {
                 Console.WriteLine("[DEBUG] Suspicious activity detected.");
@@ -108,6 +113,9 @@ namespace AceJobAgency.Pages
             await userManager.ResetAccessFailedCountAsync(user);
             HttpContext.Session.Remove("FailedLoginAttempts");
 
+            // ✅ Log successful login
+            await _auditLogService.LogAsync(user.Email, "Login Successful");
+
             // ✅ Generate OTP
             string otp = GenerateOTP();
             HttpContext.Session.SetString("OTP", otp);
@@ -115,7 +123,7 @@ namespace AceJobAgency.Pages
             HttpContext.Session.SetString("UserEmail", LModel.Email);
 
             // ✅ Send OTP via Email
-            await emailSender.SendEmailAsync(LModel.Email, "Your OTP Code", $"Your OTP is: <b>{otp}</b>. It expires in 3 minutes.");
+            await emailSender.SendEmailAsync(LModel.Email, "Your OTP Code", $"Your OTP is: <b>{otp}</b>. It expires in 1 minute.");
 
             // ✅ Redirect to OTP Verification Page
             return RedirectToPage("/OTPVerification");
