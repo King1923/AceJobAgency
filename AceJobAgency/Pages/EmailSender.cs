@@ -21,7 +21,7 @@ public class EmailSender : IEmailSender
     {
         try
         {
-            _logger.LogInformation($"📩 Attempting to send email to {email}...");
+            _logger.LogInformation($"📩 Attempting to send email to {MaskEmail(email)}...");
 
             var smtpClient = new SmtpClient
             {
@@ -51,5 +51,17 @@ public class EmailSender : IEmailSender
         {
             _logger.LogError($"❌ Error sending email: {ex.Message}");
         }
+    }
+
+    private string MaskEmail(string email)
+    {
+        if (string.IsNullOrEmpty(email) || !email.Contains("@"))
+            return "Invalid Email";
+
+        var parts = email.Split('@');
+        if (parts[0].Length <= 2)
+            return $"***@{parts[1]}";
+
+        return $"{parts[0].Substring(0, 2)}***@{parts[1]}";
     }
 }
